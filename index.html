@@ -1,0 +1,2074 @@
+<!doctype html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>詞彙抽籤表</title>
+  <style>
+    :root {
+      --bg1: #fde7f3;
+      --bg2: #e8f0ff;
+      --card: #ffffff;
+      --shadow: 0 16px 40px rgba(33, 19, 66, .12);
+      --shadow2: 0 10px 24px rgba(33, 19, 66, .10);
+      --text: #2a2240;
+      --muted: #6c648a;
+      --pri1: #ff4aa6;
+      --pri2: #6d3cff;
+      --pri3: #8c52ff;
+      --good: #23a26d;
+      --bad: #e24a4a;
+      --line: rgba(37, 23, 68, .10);
+      --chip: #f5f2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 0%, var(--bg1) 0%, rgba(253, 231, 243, 0) 60%),
+        radial-gradient(900px 500px at 80% 20%, var(--bg2) 0%, rgba(232, 240, 255, 0) 60%),
+        linear-gradient(180deg, #f7f2ff 0%, #f6f7ff 60%, #ffffff 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 70px;
+    }
+
+    header {
+      text-align: center;
+      padding: 12px 0 18px;
+    }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: clamp(22px, 3.5vw, 40px);
+      letter-spacing: .5px;
+      color: #6a2bbf;
+      font-weight: 900;
+      text-shadow: 0 2px 0 rgba(255, 255, 255, .7);
+    }
+
+    header .sub {
+      color: #7b53c6;
+      font-weight: 700;
+      opacity: .9;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 側邊欄樣式 */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+
+      height: 100vh;
+      background: var(--card);
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+      padding: 20px;
+      border-left: 1px solid rgba(59, 43, 106, 0.1);
+    }
+
+    .sidebar.open {
+      right: 0;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 999;
+      display: none;
+    }
+
+    .sidebar-overlay.show {
+      display: block;
+    }
+
+    .toggle-sidebar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1001;
+      background: var(--pri2);
+      color: white;
+      border: none;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-help {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1001;
+      background: #6c648a;
+      color: white;
+      border: none;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      font-weight: 900;
+      font-size: 20px;
+    }
+
+    .grid {
+      display: block;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, .7);
+    }
+
+    .card-inner {
+      padding: 18px;
+    }
+
+    .titleRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .secTitle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      color: #3b2b6a;
+    }
+
+    .secTitle small {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-weight: 900;
+      font-size: 14px;
+      color: white;
+      background: linear-gradient(90deg, var(--pri1), var(--pri2));
+      box-shadow: 0 10px 22px rgba(109, 60, 255, .24);
+      transition: transform .08s ease, filter .2s ease, opacity .2s ease;
+      user-select: none;
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(.99);
+    }
+
+    .btn.secondary {
+      background: #f3efff;
+      color: #3b2b6a;
+      box-shadow: none;
+      border: 1px solid rgba(59, 43, 106, .16);
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: #3b2b6a;
+      box-shadow: none;
+      border: 1px dashed rgba(59, 43, 106, .28);
+    }
+
+    .btn.small {
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .btn.danger {
+      background: linear-gradient(90deg, #ff5a5a, #ff2f7e);
+    }
+
+    .btn.good {
+      background: linear-gradient(90deg, #20c58f, #1b9a69);
+    }
+
+    .btn.bad {
+      background: linear-gradient(90deg, #ff6a6a, #d83d3d);
+    }
+
+    .btn.warning {
+      background: linear-gradient(90deg, #ff9500, #ff6b00);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      filter: saturate(.6);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: #f6f2ff;
+      border: 1px solid rgba(59, 43, 106, .12);
+      color: #3b2b6a;
+      font-weight: 900;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .bigCenter {
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px 10px 14px;
+    }
+
+    .dice {
+      width: 92px;
+      height: 92px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #ff68b9, #6d3cff);
+      box-shadow: 0 18px 30px rgba(109, 60, 255, .25);
+      margin-bottom: 2px;
+      transition: transform 0.1s ease-out;
+    }
+
+    .dice span {
+      font-size: 40px;
+      filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .12));
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .statBox {
+      border-radius: 14px;
+      padding: 14px 12px;
+      border: 1px solid rgba(59, 43, 106, .10);
+      background: linear-gradient(180deg, #fbf9ff, #ffffff);
+      text-align: center;
+    }
+
+    .statNum {
+      font-weight: 1000;
+      color: #6d3cff;
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .statNum.good {
+      color: var(--good);
+    }
+
+    .statNum.bad {
+      color: var(--bad);
+    }
+
+    .statLab {
+      font-weight: 900;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      font-weight: 900;
+      color: #3b2b6a;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(59, 43, 106, .18);
+      outline: none;
+      font-weight: 800;
+      font-size: 14px;
+      color: #2a2240;
+      background: #fff;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      border-color: rgba(109, 60, 255, .55);
+      box-shadow: 0 0 0 4px rgba(109, 60, 255, .12);
+    }
+
+    .adminRow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .warn {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fff6f6;
+      border: 1px solid rgba(226, 74, 74, .25);
+      color: #9a2f2f;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .success {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f0fff6;
+      border: 1px solid rgba(35, 162, 109, .25);
+      color: #1a6b47;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .qWrap {
+      padding-top: 10px;
+    }
+
+    .qHead {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .qMeta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .qMeta .k {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--chip);
+      border: 1px solid rgba(109, 60, 255, .16);
+      font-weight: 900;
+      color: #3b2b6a;
+      font-size: 12px;
+    }
+
+    .qBox {
+      border-radius: 16px;
+      border: 1px solid rgba(59, 43, 106, .10);
+      background: linear-gradient(180deg, #fbfaff, #ffffff);
+      padding: 14px 14px 12px;
+    }
+
+    .word {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 20px 2px;
+    }
+
+    .char {
+      position: relative;
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .hz {
+      font-size: clamp(48px, 6vw, 72px);
+      font-weight: 950;
+      letter-spacing: 1px;
+      color: #3b2b6a;
+      line-height: 1;
+    }
+
+    .zy {
+      display: flex;
+      flex-direction: column;
+      font-size: 24px;
+      /* 加大注音 */
+      font-weight: 900;
+      color: #6d3cff !important;
+      line-height: 1;
+      transform: translateY(-5px);
+      white-space: nowrap;
+      position: relative;
+      min-width: 30px;
+      min-height: 40px;
+    }
+
+    .zy span {
+      display: block;
+      text-align: center;
+    }
+
+    .zy .tone {
+      position: absolute;
+      right: -15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+    }
+
+    .zy.missing {
+      color: #9a95aa;
+    }
+
+
+    .qActions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      justify-content: center;
+    }
+
+    .answerArea {
+      margin-top: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(59, 43, 106, .22);
+      background: #ffffff;
+      padding: 12px;
+      display: none;
+    }
+
+    .answerArea.show {
+      display: block;
+    }
+
+    .answerImg {
+      width: 100%;
+      max-height: 380px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #f7f6ff;
+      border: 1px solid rgba(59, 43, 106, .10);
+    }
+
+    .answerCap {
+      margin-top: 10px;
+      font-weight: 900;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+
+    .list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 0 2px;
+    }
+
+    .chip {
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid rgba(59, 43, 106, .12);
+      box-shadow: var(--shadow2);
+      padding: 10px 12px;
+      min-width: 120px;
+      cursor: pointer;
+      transition: transform .08s ease, border-color .2s ease;
+    }
+
+    .chip:hover {
+      border-color: rgba(109, 60, 255, .30);
+    }
+
+    .chip:active {
+      transform: translateY(1px);
+    }
+
+    .chipTop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .chipWord {
+      font-weight: 1000;
+      color: #3b2b6a;
+      font-size: 15px;
+    }
+
+    .chipState {
+      font-weight: 1000;
+      font-size: 11px;
+    }
+
+    .chipState.good {
+      color: var(--good);
+    }
+
+    .chipState.bad {
+      color: var(--bad);
+    }
+
+    .chipState.neu {
+      color: #9a95aa;
+    }
+
+    .chipSub {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .bookItem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f9f7ff;
+      border: 1px solid rgba(59, 43, 106, .10);
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .bookItem .name {
+      font-weight: 900;
+      color: #3b2b6a;
+    }
+
+    .bookItem .info {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .bookItem .actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .hr {
+      height: 1px;
+      background: rgba(59, 43, 106, .10);
+      margin: 14px 0;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: rgba(38, 26, 78, .92);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 13px;
+      display: none;
+      z-index: 60;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 30px 10px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .tabRow {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #f3efff;
+      border: 1px solid rgba(59, 43, 106, .12);
+      font-weight: 900;
+      color: #3b2b6a;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+
+    .tab:hover {
+      background: #ebe5ff;
+    }
+
+    .tab.active {
+      background: linear-gradient(90deg, var(--pri1), var(--pri2));
+      color: white;
+      border-color: transparent;
+    }
+
+    .scrollBox {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .resetBtnGroup {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Modal 樣式 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, .5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 80%
+        /* 變寬一點 */
+      ;
+      width: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: bold;
+    }
+
+    .modal-img-container {
+      text-align: center;
+    }
+
+    .modal-img {
+      max-width: 85%;
+      max-height: 75vh;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border: 4px solid white;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #3b2b6a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-body {
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <h1>👑 詞彙抽籤表 👑</h1>
+    </header>
+
+    <button class="btn-help" id="btnHelp" title="使用說明">❓</button>
+    <button class="toggle-sidebar" id="btnToggleSidebar" title="後台設定">⚙️</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <div class="grid">
+      <!-- 左側：主區 -->
+      <section>
+
+        <!-- 書庫選擇 -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-inner">
+            <div class="titleRow">
+              <div class="secTitle">📚 選擇書庫</div>
+            </div>
+            <div class="field" style="margin-bottom: 0;">
+              <select id="selBook">
+                <option value="">-- 請先新增書庫 --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 抽籤區 -->
+        <div class="card">
+          <div class="card-inner">
+            <div class="bigCenter" id="heroArea">
+              <div class="dice"><span>🎲</span></div>
+              <button class="btn" id="btnDraw" disabled>🎯 開始抽籤</button>
+              <div class="hint" id="heroHint">請先在右側「後台管理」新增書庫並綁定資料夾。</div>
+            </div>
+
+            <!-- 抽籤結果區塊 -->
+            <div id="questionArea" style="display:none; border-top: 1px solid var(--line); padding-top: 20px;">
+              <div class="qMeta" style="margin-bottom: 15px;">
+                <div class="k">
+                  <span class="badge" id="qBookName">📚 書庫</span>
+                  <span class="badge" id="qIndex">🎯 第 1 題</span>
+                </div>
+              </div>
+
+              <div class="qBox"
+                style="background: #fff; border-radius: 16px; padding: 25px 15px; border: 1px solid rgba(59,43,106,0.1); margin-bottom: 20px;">
+                <div id="wordDisplay" class="word"></div>
+              </div>
+
+              <div class="qActions">
+                <button class="btn" id="btnDrawNext"
+                  style="background: linear-gradient(90deg, #ff9a9e, #fad0c4); color: #333;">🎲 抽下一個</button>
+                <button class="btn" id="btnShowAns">👀 顯示答案</button>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn good small" id="btnCorrect">✅ 答對</button>
+                  <button class="btn bad small" id="btnWrong">❌ 答錯</button>
+                </div>
+              </div>
+            </div>
+
+
+
+
+            <!-- 統計 -->
+            <div class="hr"></div>
+            <div class="titleRow">
+              <div class="secTitle">📊 統計</div>
+              <div class="resetBtnGroup">
+                <button class="btn small secondary" id="btnReset">🔄 重置本書庫</button>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="statBox">
+                <div class="statNum" id="statTotal">0</div>
+                <div class="statLab">總題數</div>
+              </div>
+              <div class="statBox">
+                <div class="statNum" id="statDrawn">0</div>
+                <div class="statLab">已抽</div>
+              </div>
+              <div class="statBox">
+                <div class="statNum good" id="statCorrect">0</div>
+                <div class="statLab">答對</div>
+              </div>
+              <div class="statBox">
+                <div class="statNum bad" id="statWrong">0</div>
+                <div class="statLab">答錯</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 歷史清單 -->
+        <div class="card" style="margin-top: 16px;">
+          <div class="card-inner">
+            <div class="titleRow">
+              <div class="secTitle">📝 已抽清單 <small id="historyCount">(0)</small></div>
+              <div class="tabRow" style="margin-bottom: 0;">
+                <span class="tab active" data-filter="all">全部</span>
+                <span class="tab" data-filter="wrong">❌ 錯題</span>
+              </div>
+            </div>
+            <div class="scrollBox">
+              <div class="list" id="historyList">
+                <div class="empty">尚未抽過任何題目</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      </section>
+
+      <!-- 右側：後台管理 (現在被包在 sidebar 內) -->
+      <section class="sidebar" id="sidebar">
+        <div class="card">
+          <div class="card-inner">
+            <div class="titleRow">
+              <div class="secTitle">⚙️ 後台管理</div>
+            </div>
+
+            <div class="field">
+              <label>📖 新增書庫名稱</label>
+              <input type="text" id="inputBookName" placeholder="例如：第一冊、動物篇..." />
+            </div>
+            <div class="field">
+              <label>📁 綁定資料夾（選擇後自動掃描圖片）</label>
+              <button class="btn secondary" id="btnSelectFolder">📂 選擇資料夾</button>
+              <div class="hint" id="folderHint">尚未選擇資料夾</div>
+            </div>
+            <button class="btn" id="btnAddBook" disabled>➕ 新增書庫</button>
+
+            <div class="hr"></div>
+
+            <div class="titleRow">
+              <div class="secTitle">📚 已建立的書庫</div>
+            </div>
+            <div id="bookList">
+              <div class="empty">尚未建立任何書庫</div>
+            </div>
+
+            <div class="hr"></div>
+
+            <!-- 全域重置區塊 -->
+            <div class="titleRow">
+              <div class="secTitle">🔧 系統管理</div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+              <button class="btn small warning" id="btnResetAllRecords">🔄 重置所有抽籤紀錄</button>
+              <button class="btn small danger" id="btnResetAll">🗑️ 清空全部資料</button>
+            </div>
+
+            <div class="hr"></div>
+            <div class="hint">
+              💡 <b>使用說明：</b><br>
+              1. 輸入書庫名稱<br>
+              2. 點「選擇資料夾」綁定圖片資料夾<br>
+              3. 系統自動掃描圖片，檔名即為題目<br>
+              4. 切換書庫後即可開始抽籤<br>
+              5. 注音會自動從萌典 API 查詢<br><br>
+              🔄 <b>重置功能：</b><br>
+              • 重置本書庫：清空當前書庫的抽籤紀錄<br>
+              • 重置所有抽籤紀錄：保留書庫，清空所有紀錄<br>
+              • 清空全部資料：刪除所有書庫和紀錄
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 確認對話框 Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <span class="modal-close" id="modalClose">&times;</span>
+      <div class="modal-title" id="modalTitle">⚠️ 確認操作</div>
+      <div class="modal-body" id="modalBody">確定要執行此操作嗎？</div>
+      <div class="modal-actions" id="modalActions">
+        <button class="btn secondary" id="modalCancel">取消</button>
+        <button class="btn danger" id="modalConfirm">確認</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // ========== 資料結構 ==========
+    let books = {}; // { bookName: { files: [{name, dataUrl}], drawn: [], history: [] } }
+    let currentBook = '';
+    let currentQuestion = null;
+    let selectedFiles = [];
+    let zhuyinCache = {};
+    let historyFilter = 'all';
+    let modalCallback = null;
+
+    // ========== DOM ==========
+    const $ = id => document.getElementById(id);
+    const selBook = $('selBook');
+    const btnDraw = $('btnDraw');
+    const heroArea = $('heroArea');
+    const heroHint = $('heroHint');
+    const questionArea = $('questionArea');
+    const wordDisplay = $('wordDisplay');
+    const answerArea = $('answerArea');
+    const answerImg = $('answerImg');
+    const answerFileName = $('answerFileName');
+    const qBookName = $('qBookName');
+    const qIndex = $('qIndex');
+    const btnShowAns = $('btnShowAns');
+    const btnDrawNext = $('btnDrawNext');
+    const btnToggleSidebar = $('btnToggleSidebar');
+    const sidebar = $('sidebar');
+    const sidebarOverlay = $('sidebarOverlay');
+
+    const btnCorrect = $('btnCorrect');
+    const btnWrong = $('btnWrong');
+    const btnNext = $('btnNext');
+    const btnReset = $('btnReset');
+    const statTotal = $('statTotal');
+    const statDrawn = $('statDrawn');
+    const statCorrect = $('statCorrect');
+    const statWrong = $('statWrong');
+    const historyList = $('historyList');
+    const historyCount = $('historyCount');
+    const inputBookName = $('inputBookName');
+    const btnSelectFolder = $('btnSelectFolder');
+    const folderHint = $('folderHint');
+    const btnAddBook = $('btnAddBook');
+    const btnHelp = $('btnHelp');
+    const bookList = $('bookList');
+    const toast = $('toast');
+    const btnResetAllRecords = $('btnResetAllRecords');
+    const btnResetAll = $('btnResetAll');
+    const modalActions = $('modalActions');
+    const modalClose = $('modalClose');
+    const modalOverlay = $('modalOverlay');
+    const modalTitle = $('modalTitle');
+    const modalBody = $('modalBody');
+    const modalCancel = $('modalCancel');
+    const modalConfirm = $('modalConfirm');
+
+
+    // ========== Modal 確認對話框 ==========
+    function showModal(title, body, confirmText, isDanger, callback, hideCancel = false) {
+      modalTitle.innerHTML = title;
+      modalBody.innerHTML = body;
+
+      if (confirmText === null) {
+        modalActions.style.display = 'none';
+      } else {
+        modalActions.style.display = 'flex';
+        modalConfirm.textContent = confirmText || '確認';
+        modalConfirm.className = isDanger ? 'btn danger' : 'btn';
+        modalCancel.style.display = hideCancel ? 'none' : 'block';
+      }
+
+      modalCallback = callback;
+      modalOverlay.classList.add('show');
+    }
+
+
+    function hideModal() {
+      modalOverlay.classList.remove('show');
+      modalCallback = null;
+    }
+
+    modalCancel.onclick = hideModal;
+    modalConfirm.onclick = () => {
+      if (modalCallback) modalCallback();
+      hideModal();
+    };
+    modalOverlay.onclick = (e) => {
+      if (e.target === modalOverlay) hideModal();
+    };
+
+    // ========== Toast ==========
+    function showToast(msg, duration = 2000) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // ========== IndexedDB 管理 ==========
+    const DB_NAME = 'DrawLotsDB';
+    const STORE_NAME = 'BooksStore';
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 2);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve();
+        };
+        request.onerror = (e) => reject(e);
+      });
+    }
+
+    async function dbPut(key, val) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.put(val, key);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject();
+      });
+    }
+
+    async function dbGet(key) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject();
+      });
+    }
+
+    async function saveData() {
+      const saveBooks = {};
+      for (const [name, book] of Object.entries(books)) {
+        saveBooks[name] = {
+          files: book.files, // 儲存完整物件（含 dataUrl）
+          drawn: book.drawn,
+          history: book.history
+        };
+      }
+      try {
+        await dbPut('books', saveBooks);
+        localStorage.setItem('drawLots_currentBook', currentBook);
+        localStorage.setItem('drawLots_zhuyinCache', JSON.stringify(zhuyinCache));
+      } catch (e) {
+        console.error('儲存失敗', e);
+      }
+    }
+
+    async function loadData() {
+      try {
+        await initDB();
+        const savedBooks = await dbGet('books') || {};
+        const savedCurrent = localStorage.getItem('drawLots_currentBook') || '';
+        const savedCache = JSON.parse(localStorage.getItem('drawLots_zhuyinCache') || '{}');
+
+        zhuyinCache = savedCache;
+        books = savedBooks;
+        currentBook = savedCurrent;
+
+        // 如果 localStorage 還有舊格式的資料，可以考慮遷移，但這裡我們先以新格式為主
+      } catch (e) {
+        console.error('載入資料失敗', e);
+      }
+    }
+
+    // ========== 萌典 API ==========
+    async function getZhuyin(word) {
+      if (!word) return [];
+
+      // 嘗試整詞查詢以優化破音字
+      try {
+        const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(word)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.heteronyms && data.heteronyms[0] && data.heteronyms[0].bopomofo) {
+            const fullZy = data.heteronyms[0].bopomofo;
+            // 萌典詞彙注音通常以空格分隔，例如 "ㄒㄧㄠˇ ㄒㄩㄝˊ"
+            const parts = fullZy.trim().split(/\s+/);
+            if (parts.length === word.length) {
+              return parts;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('整詞查詢失敗，切換至單字查詢', e);
+      }
+
+      // 如果整詞查詢失敗或長度不符，則回退至逐字查詢
+      const results = [];
+      for (const char of word) {
+        if (zhuyinCache[char]) {
+          results.push(zhuyinCache[char]);
+          continue;
+        }
+        try {
+          const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(char)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.heteronyms && data.heteronyms[0] && data.heteronyms[0].bopomofo) {
+              const zy = data.heteronyms[0].bopomofo.replace(/[˙ˊˇˋ\s]/g, m => m);
+              zhuyinCache[char] = zy;
+              results.push(zy);
+            } else {
+              results.push('');
+            }
+          } else {
+            results.push('');
+          }
+        } catch (e) {
+          console.error('查詢注音失敗', char, e);
+          results.push('');
+        }
+      }
+      saveData();
+      return results;
+    }
+
+
+    async function prefetchZhuyin(bookName) {
+      if (!books[bookName]) return;
+      const files = books[bookName].files;
+      for (const file of files) {
+        if (!zhuyinCache[file.name]) {
+          await getZhuyin(file.name);
+        }
+      }
+    }
+
+    // ========== 注音拆分顯示 ==========
+    function splitZhuyin(zy) {
+      const tones = ['˙', 'ˊ', 'ˇ', 'ˋ'];
+      let main = [];
+      let tone = '';
+      for (const c of zy) {
+        if (tones.includes(c)) {
+          tone = c;
+        } else {
+          main.push(c);
+        }
+      }
+      return { main, tone };
+    }
+
+
+    // ========== 渲染題目 ==========
+    async function renderQuestion(q) {
+      if (!q || !q.name) return;
+      const display = document.getElementById('wordDisplay');
+      if (!display) return;
+
+      display.innerHTML = '';
+      const chars = q.name.split('');
+
+      chars.forEach((char, i) => {
+        const charEl = document.createElement('div');
+        charEl.className = 'char';
+
+        const hzEl = document.createElement('span');
+        hzEl.className = 'hz';
+        hzEl.textContent = char;
+
+        const zyEl = document.createElement('div');
+        zyEl.className = 'zy';
+        zyEl.id = `zy-char-${i}`;
+
+        if (zhuyinCache[char]) {
+          const { main, tone } = splitZhuyin(zhuyinCache[char]);
+          main.forEach(c => {
+            const s = document.createElement('span');
+            s.textContent = c;
+            zyEl.appendChild(s);
+          });
+          if (tone) {
+            const ts = document.createElement('span');
+            ts.className = 'tone';
+            ts.textContent = tone;
+            zyEl.appendChild(ts);
+          }
+        } else {
+          zyEl.textContent = '...';
+        }
+
+        charEl.appendChild(hzEl);
+        charEl.appendChild(zyEl);
+        display.appendChild(charEl);
+      });
+
+      // 非同步更新
+      getZhuyin(q.name).then(list => {
+        q.zhuyin = list;
+        chars.forEach((char, i) => {
+          const zy = list[i];
+          const zyEl = document.getElementById(`zy-char-${i}`);
+          if (zy && zyEl && (zyEl.textContent === '...' || zyEl.innerHTML === '')) {
+            zyEl.innerHTML = '';
+            const { main, tone } = splitZhuyin(zy);
+            main.forEach(c => {
+              const s = document.createElement('span');
+              s.textContent = c;
+              zyEl.appendChild(s);
+            });
+            if (tone) {
+              const ts = document.createElement('span');
+              ts.className = 'tone';
+              ts.textContent = tone;
+              zyEl.appendChild(ts);
+            }
+          } else if (!zy && zyEl && zyEl.textContent === '...') {
+            zyEl.textContent = '?';
+          }
+        });
+      }).catch(err => {
+        console.error(err);
+        chars.forEach((_, i) => {
+          const zyEl = document.getElementById(`zy-char-${i}`);
+          if (zyEl && zyEl.textContent === '...') zyEl.textContent = '?';
+        });
+      });
+    }
+
+
+
+    // ========== 更新統計 ==========
+    function updateStats() {
+      if (!currentBook || !books[currentBook]) {
+        statTotal.textContent = '0';
+        statDrawn.textContent = '0';
+        statCorrect.textContent = '0';
+        statWrong.textContent = '0';
+        return;
+      }
+      const book = books[currentBook];
+      statTotal.textContent = book.files.length;
+      statDrawn.textContent = book.drawn.length;
+      const correct = book.history.filter(h => h.state === 'correct').length;
+      const wrong = book.history.filter(h => h.state === 'wrong').length;
+      statCorrect.textContent = correct;
+      statWrong.textContent = wrong;
+    }
+
+    // ========== 更新歷史清單 ==========
+    function updateHistory() {
+      if (!currentBook || !books[currentBook]) {
+        historyList.innerHTML = '<div class="empty">尚未抽過任何題目</div>';
+        historyCount.textContent = '(0)';
+        return;
+      }
+      const book = books[currentBook];
+      let list = [...book.history].reverse();
+
+      if (historyFilter === 'wrong') {
+        list = list.filter(h => h.state === 'wrong');
+      }
+
+      historyCount.textContent = `(${book.history.length})`;
+
+      if (list.length === 0) {
+        historyList.innerHTML = '<div class="empty">' +
+          (historyFilter === 'wrong' ? '沒有錯題' : '尚未抽過任何題目') + '</div>';
+        return;
+      }
+
+      historyList.innerHTML = '';
+      list.forEach((h, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.onclick = () => reviewQuestion(h);
+
+        let stateClass = 'neu';
+        let stateText = '未作答';
+        if (h.state === 'correct') { stateClass = 'good'; stateText = '✅ 對'; }
+        else if (h.state === 'wrong') { stateClass = 'bad'; stateText = '❌ 錯'; }
+
+        chip.innerHTML = `
+          <div class="chipTop">
+            <span class="chipWord">${h.name}</span>
+            <span class="chipState ${stateClass}">${stateText}</span>
+          </div>
+          <div class="chipSub">${h.showedAnswer ? '已看答案' : '未看答案'}</div>
+        `;
+        historyList.appendChild(chip);
+      });
+    }
+
+    // ========== 回看題目 ==========
+    async function reviewQuestion(h) {
+      const book = books[currentBook];
+      const file = book.files.find(f => f.name === h.name);
+      if (!file) {
+        showToast('找不到該題目');
+        return;
+      }
+
+      currentQuestion = { ...h, dataUrl: file.dataUrl };
+      document.getElementById('heroArea').style.display = 'none';
+      document.getElementById('questionArea').style.display = 'block';
+
+      document.getElementById('qBookName').textContent = '📚 ' + currentBook;
+      const idx = book.history.findIndex(x => x.name === h.name);
+      document.getElementById('qIndex').textContent = '🎯 第 ' + (idx + 1) + ' 題（回看）';
+
+      await renderQuestion(currentQuestion);
+      updateButtonStates();
+    }
+
+    // ========== 更新按鈕狀態 ==========
+    function updateButtonStates() {
+      if (!currentQuestion) return;
+      const book = books[currentBook];
+      const h = book.history.find(x => x.name === currentQuestion.name);
+      if (h) {
+        btnCorrect.disabled = h.state === 'correct';
+        btnWrong.disabled = h.state === 'wrong';
+      }
+    }
+
+    // ========== 抽籤 ==========
+    async function drawQuestion() {
+      if (!currentBook || !books[currentBook]) {
+        showToast('請先選擇書庫');
+        return;
+      }
+
+      const book = books[currentBook];
+
+      const hasData = book.files.some(f => f.dataUrl);
+      if (!hasData) {
+        showToast('請重新綁定資料夾以載入圖片');
+        return;
+      }
+
+      const remaining = book.files.filter(f => !book.drawn.includes(f.name));
+      if (remaining.length === 0) {
+        showToast('本書庫已全部抽完！');
+        return;
+      }
+
+      const idx = Math.floor(Math.random() * remaining.length);
+      const file = remaining[idx];
+
+      book.drawn.push(file.name);
+      const historyItem = {
+        name: file.name,
+        state: null,
+        showedAnswer: false,
+        zhuyin: []
+      };
+      book.history.push(historyItem);
+
+      currentQuestion = { ...historyItem, dataUrl: file.dataUrl };
+
+      document.getElementById('heroArea').style.display = 'none';
+      document.getElementById('questionArea').style.display = 'block';
+
+      document.getElementById('qBookName').textContent = '📚 ' + currentBook;
+      document.getElementById('qIndex').textContent = '🎯 第 ' + book.history.length + ' 題';
+
+      await renderQuestion(currentQuestion);
+
+      btnCorrect.disabled = false;
+      btnWrong.disabled = false;
+
+      updateStats();
+      updateHistory();
+      saveData();
+    }
+
+    // ========== 抽籤動畫 ==========
+    async function animateDraw() {
+      // 如果答案視窗開啟中，自動關閉
+      hideModal();
+
+      if (!currentBook || !books[currentBook]) {
+        showToast('請先選擇書庫');
+        return;
+      }
+      const book = books[currentBook];
+      const remaining = book.files.filter(f => !book.drawn.includes(f.name));
+      if (remaining.length === 0) {
+        showToast('本書庫已全部抽完！');
+        return;
+      }
+
+      // 回到 heroArea 並顯示動畫
+      document.getElementById('heroArea').style.display = 'flex';
+      document.getElementById('questionArea').style.display = 'none';
+
+      const diceSpan = document.querySelector('#heroArea .dice span');
+      const originalDice = diceSpan.textContent;
+
+      // 動畫
+      const animIcons = ['🎲', '🎯', '🎰', '✨', '👑', '🔮'];
+      const diceContainer = document.querySelector('#heroArea .dice');
+
+      for (let i = 0; i < 15; i++) {
+        diceSpan.textContent = animIcons[Math.floor(Math.random() * animIcons.length)];
+        // 微小的隨機旋轉與縮放效果
+        diceContainer.style.transform = `scale(${1 + Math.random() * 0.1}) rotate(${Math.random() * 10 - 5}deg)`;
+        await new Promise(r => setTimeout(r, 60));
+      }
+      diceContainer.style.transform = 'scale(1) rotate(0deg)';
+      diceSpan.textContent = originalDice;
+
+      await drawQuestion();
+    }
+
+
+
+    // ========== 使用說明 ==========
+    function showHelp() {
+      showModal(
+        '💡 程式使用說明',
+        `<div style="max-height: 70vh; overflow-y: auto; text-align: left; padding: 0 10px; line-height: 1.6; color: #4a4a4a;">
+          <section style="margin-bottom: 20px;">
+            <h3 style="color: var(--pri2); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">💡 程式概覽</h3>
+            <p>本程式是一個離線優先的詞彙練習工具。您可以將本地電腦的圖片資料夾綁定到書庫，系統會自動提取檔名作為題目，並從萌典 API 查詢注音。</p>
+          </section>
+
+          <section style="margin-bottom: 20px;">
+            <h3 style="color: var(--pri2); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">📁 準備與新增書庫</h3>
+            <ol style="padding-left: 20px;">
+              <li><b>準備圖片</b>：請將您的詞彙圖片放入資料夾中，<b>檔案名稱即為題目</b>（例如：<code>蘋果.jpg</code>, <code>香蕉.png</code>）。</li>
+              <li><b>建立書庫</b>：
+                <ul style="padding-left: 20px; margin-top: 5px;">
+                  <li>點擊右側 <code>⚙️</code> 按鈕開啟管理面板。</li>
+                  <li>輸入「書庫名稱」。</li>
+                  <li>點擊「選擇資料夾」並授權瀏覽器存取。</li>
+                  <li>點擊「新增書庫」完成設定。</li>
+                </ul>
+              </li>
+            </ol>
+          </section>
+
+          <section style="margin-bottom: 20px;">
+            <h3 style="color: var(--pri2); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">🎯 抽籤與練習</h3>
+            <ul style="padding-left: 20px;">
+              <li><b>開始抽籤</b>：在主畫面點擊「開始抽籤」按鈕。</li>
+              <li><b>查看答案</b>：點擊「顯示答案」或按快捷鍵查看原圖。</li>
+              <li><b>標記結果</b>：根據作答情況點擊「答對」或「答錯」，系統會記錄在統計表與歷史清單中。</li>
+            </ul>
+          </section>
+
+          <section style="margin-bottom: 20px;">
+            <h3 style="color: var(--pri2); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">⌨️ 快捷鍵支援</h3>
+            <ul style="padding-left: 20px;">
+              <li><b><code>空白鍵</code> / <code>Enter</code></b>：開始抽籤 / 抽下一題 (並自動關閉答案窗)。</li>
+              <li><b><code>A</code></b>：顯示答案視窗。</li>
+              <li><b><code>Esc</code></b>：關閉答案或確認視窗。</li>
+              <li><b><code>1</code></b>：標記為「答對」。</li>
+              <li><b><code>2</code></b>：標記為「答錯」。</li>
+            </ul>
+          </section>
+
+          <section style="margin-bottom: 20px;">
+            <h3 style="color: var(--pri2); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">💾 資料記憶與限制</h3>
+            <ul style="padding-left: 20px;">
+              <li><b>自動存檔</b>：程式使用瀏覽器的 <code>IndexedDB</code> 儲存技術，您的書庫與圖片資料會永久儲存在您的電腦中。</li>
+              <li><b>消失風險</b>：
+                <ul style="padding-left: 20px; margin-top: 5px;">
+                  <li><b>更換瀏覽器</b>：不同瀏覽器（如 Chrome 切換到 Edge）資料不互通。</li>
+                  <li><b>清除快取</b>：若執行「清除 Cookie 及網站資料」操作，資料將被刪除。</li>
+                  <li><b>無痕模式</b>：在無痕視窗中操作，關閉後資料不會保留。</li>
+                </ul>
+              </li>
+            </ul>
+          </section>
+        </div>`,
+        '我明白了',
+        false,
+        null,
+        true
+      );
+    }
+
+
+    // ========== 顯示答案 ==========
+    function showAnswer() {
+      if (!currentQuestion) return;
+
+      const book = books[currentBook];
+      const file = book.files.find(f => f.name === currentQuestion.name);
+
+      showModal(
+        '👀 答案視窗',
+        `<div class="modal-img-container">
+          <img src="${file.dataUrl}" class="modal-img">
+          <div style="margin-top:15px; font-size: 2rem; font-weight: 1000; color: #3b2b6a;">${currentQuestion.name}</div>
+        </div>`,
+        null,
+        false
+      );
+
+      if (currentQuestion && currentBook && books[currentBook]) {
+        const h = books[currentBook].history.find(x => x.name === currentQuestion.name);
+        if (h) h.showedAnswer = true;
+        updateHistory();
+        saveData();
+      }
+    }
+
+
+    // ========== 標記答對/答錯 ==========
+    function markAnswer(state) {
+      if (!currentQuestion || !currentBook || !books[currentBook]) return;
+      const h = books[currentBook].history.find(x => x.name === currentQuestion.name);
+      if (h) {
+        h.state = state;
+        updateStats();
+        updateHistory();
+        updateButtonStates();
+        saveData();
+        showToast(state === 'correct' ? '✅ 已標記為答對' : '❌ 已標記為答錯');
+      }
+    }
+
+    // ========== 下一題 ==========
+    function nextQuestion() {
+      const book = books[currentBook];
+      const remaining = book.files.filter(f => !book.drawn.includes(f.name));
+      if (remaining.length === 0) {
+        showToast('本書庫已全部抽完！');
+        return;
+      }
+      drawQuestion();
+    }
+
+    // ========== 重置單一書庫 ==========
+    function resetBook() {
+      if (!currentBook || !books[currentBook]) return;
+
+      showModal(
+        '🔄 重置書庫',
+        `確定要重置「<b>${currentBook}</b>」的抽籤紀錄嗎？<br><br>此操作會清空該書庫的所有抽籤歷史，但保留書庫本身。`,
+        '確認重置',
+        false,
+        () => {
+          books[currentBook].drawn = [];
+          books[currentBook].history = [];
+          currentQuestion = null;
+
+          heroArea.style.display = 'flex';
+          questionArea.style.display = 'none';
+
+          updateStats();
+          updateHistory();
+          saveData();
+          showToast('✅ 已重置書庫「' + currentBook + '」');
+        }
+      );
+    }
+
+    // ========== 重置所有抽籤紀錄（保留書庫） ==========
+    function resetAllRecords() {
+      if (Object.keys(books).length === 0) {
+        showToast('目前沒有任何書庫');
+        return;
+      }
+
+      showModal(
+        '🔄 重置所有抽籤紀錄',
+        `確定要重置<b>所有書庫</b>的抽籤紀錄嗎？<br><br>
+        <b>將會清除：</b><br>
+        • 所有書庫的抽籤歷史<br>
+        • 所有答對/答錯紀錄<br><br>
+        <b>將會保留：</b><br>
+        • 所有書庫設定<br>
+        • 注音快取資料`,
+        '確認重置',
+        false,
+        () => {
+          for (const name of Object.keys(books)) {
+            books[name].drawn = [];
+            books[name].history = [];
+          }
+          currentQuestion = null;
+
+          heroArea.style.display = 'flex';
+          questionArea.style.display = 'none';
+
+          updateStats();
+          updateHistory();
+          updateBookList();
+          saveData();
+          showToast('✅ 已重置所有書庫的抽籤紀錄');
+        }
+      );
+    }
+
+    // ========== 清空全部資料 ==========
+    function resetAll() {
+      showModal(
+        '⚠️ 清空全部資料',
+        `<span style="color:#e24a4a;"><b>警告：此操作無法復原！</b></span><br><br>
+        確定要清空全部資料嗎？<br><br>
+        <b>將會刪除：</b><br>
+        • 所有書庫<br>
+        • 所有抽籤紀錄<br>
+        • 所有注音快取<br><br>
+        清空後需要重新建立書庫並綁定資料夾。`,
+        '確認清空',
+        true,
+        () => {
+          books = {};
+          currentBook = '';
+          currentQuestion = null;
+          zhuyinCache = {};
+          selectedFiles = [];
+
+          localStorage.removeItem('drawLots_books');
+          localStorage.removeItem('drawLots_currentBook');
+          localStorage.removeItem('drawLots_zhuyinCache');
+
+          heroArea.style.display = 'flex';
+          questionArea.style.display = 'none';
+          heroHint.textContent = '請先在右側「後台管理」新增書庫並綁定資料夾。';
+          btnDraw.disabled = true;
+
+          updateBookSelect();
+          updateBookList();
+          updateStats();
+          updateHistory();
+
+          showToast('✅ 已清空全部資料');
+        }
+      );
+    }
+
+    // ========== 更新書庫選單 ==========
+    function updateBookSelect() {
+      selBook.innerHTML = '<option value="">-- 請選擇書庫 --</option>';
+      for (const name of Object.keys(books)) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name + ` (${books[name].files.length} 題)`;
+        selBook.appendChild(opt);
+      }
+      if (currentBook && books[currentBook]) {
+        selBook.value = currentBook;
+      }
+    }
+
+    // ========== 更新書庫列表 ==========
+    function updateBookList() {
+      if (Object.keys(books).length === 0) {
+        bookList.innerHTML = '<div class="empty">尚未建立任何書庫</div>';
+        return;
+      }
+
+      bookList.innerHTML = '';
+      for (const [name, book] of Object.entries(books)) {
+        const hasData = book.files.some(f => f.dataUrl);
+        const drawnCount = book.drawn.length;
+        const totalCount = book.files.length;
+        const div = document.createElement('div');
+        div.className = 'bookItem';
+        div.innerHTML = `
+          <div>
+            <div class="name">${name}</div>
+            <div class="info">${totalCount} 題 | 已抽 ${drawnCount} 題 | ${hasData ? '✅ 已載入' : '⚠️ 需重新綁定'}</div>
+          </div>
+          <div class="actions">
+            <button class="btn small secondary rebind-btn" data-book="${name}">📂 重新綁定</button>
+            <button class="btn small danger delete-btn" data-book="${name}">🗑️</button>
+          </div>
+        `;
+        bookList.appendChild(div);
+      }
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = () => deleteBook(btn.dataset.book);
+      });
+      document.querySelectorAll('.rebind-btn').forEach(btn => {
+        btn.onclick = () => rebindBook(btn.dataset.book);
+      });
+    }
+
+    // ========== 刪除書庫 ==========
+    function deleteBook(name) {
+      showModal(
+        '🗑️ 刪除書庫',
+        `確定要刪除「<b>${name}</b>」書庫嗎？<br><br>此操作會刪除該書庫及其所有抽籤紀錄。`,
+        '確認刪除',
+        true,
+        () => {
+          delete books[name];
+          if (currentBook === name) {
+            currentBook = '';
+            currentQuestion = null;
+            heroArea.style.display = 'flex';
+            questionArea.style.display = 'none';
+            heroHint.textContent = '請先選擇書庫';
+            btnDraw.disabled = true;
+          }
+          updateBookSelect();
+          updateBookList();
+          updateStats();
+          updateHistory();
+          saveData();
+          showToast('✅ 已刪除書庫「' + name + '」');
+        }
+      );
+    }
+
+    // ========== 重新綁定書庫 ==========
+    async function rebindBook(name) {
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        const files = [];
+        const imageExts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
+
+        for await (const entry of dirHandle.values()) {
+          if (entry.kind === 'file') {
+            const lowerName = entry.name.toLowerCase();
+            if (imageExts.some(ext => lowerName.endsWith(ext))) {
+              const file = await entry.getFile();
+              const dataUrl = await fileToDataUrl(file);
+              const baseName = entry.name.replace(/\.[^.]+$/, '');
+              files.push({ name: baseName, dataUrl });
+            }
+          }
+        }
+
+        if (files.length === 0) {
+          showToast('資料夾內沒有圖片檔案');
+          return;
+        }
+
+        const oldHistory = books[name].history;
+        const oldDrawn = books[name].drawn;
+
+        books[name].files = files;
+        const newNames = files.map(f => f.name);
+        books[name].drawn = oldDrawn.filter(n => newNames.includes(n));
+        books[name].history = oldHistory.filter(h => newNames.includes(h.name));
+
+        updateBookList();
+        updateBookSelect();
+        updateStats();
+        updateHistory();
+        saveData();
+        showToast(`✅ 已重新綁定「${name}」，共 ${files.length} 題`);
+
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('重新綁定失敗', e);
+          showToast('❌ 重新綁定失敗');
+        }
+      }
+    }
+
+    // ========== 選擇資料夾 ==========
+    async function selectFolder() {
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        const files = [];
+        const imageExts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
+
+        for await (const entry of dirHandle.values()) {
+          if (entry.kind === 'file') {
+            const lowerName = entry.name.toLowerCase();
+            if (imageExts.some(ext => lowerName.endsWith(ext))) {
+              const file = await entry.getFile();
+              const dataUrl = await fileToDataUrl(file);
+              const baseName = entry.name.replace(/\.[^.]+$/, '');
+              files.push({ name: baseName, dataUrl });
+            }
+          }
+        }
+
+        if (files.length === 0) {
+          folderHint.textContent = '⚠️ 資料夾內沒有圖片檔案';
+          selectedFiles = [];
+          btnAddBook.disabled = true;
+          return;
+        }
+
+        selectedFiles = files;
+        folderHint.textContent = `✅ 已掃描到 ${files.length} 張圖片`;
+        btnAddBook.disabled = !inputBookName.value.trim();
+
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('選擇資料夾失敗', e);
+          showToast('❌ 選擇資料夾失敗');
+        }
+      }
+    }
+
+    // ========== 檔案轉 DataURL ==========
+    function fileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ========== 新增書庫 ==========
+    function addBook() {
+      const name = inputBookName.value.trim();
+      if (!name) {
+        showToast('請輸入書庫名稱');
+        return;
+      }
+      if (books[name]) {
+        showToast('書庫名稱已存在');
+        return;
+      }
+      if (selectedFiles.length === 0) {
+        showToast('請先選擇資料夾');
+        return;
+      }
+
+      books[name] = {
+        files: [...selectedFiles],
+        drawn: [],
+        history: []
+      };
+
+      currentBook = name;
+
+      inputBookName.value = '';
+      folderHint.textContent = '尚未選擇資料夾';
+      selectedFiles = [];
+      btnAddBook.disabled = true;
+
+      updateBookSelect();
+      updateBookList();
+      updateStats();
+      updateHistory();
+      saveData();
+
+      heroArea.style.display = 'flex';
+      questionArea.style.display = 'none';
+      heroHint.textContent = `已建立「${name}」，共 ${books[name].files.length} 題，可以開始抽籤！`;
+      btnDraw.disabled = false;
+
+      showToast(`✅ 已新增書庫「${name}」`);
+
+      // 預抓注音
+      prefetchZhuyin(name);
+    }
+
+    // ========== 切換書庫 ==========
+    function switchBook() {
+      const name = selBook.value;
+      if (!name) {
+        currentBook = '';
+        btnDraw.disabled = true;
+        heroHint.textContent = '請先選擇書庫';
+        heroArea.style.display = 'flex';
+        questionArea.style.display = 'none';
+        updateStats();
+        updateHistory();
+        return;
+      }
+
+      currentBook = name;
+      const book = books[name];
+      const hasData = book.files.some(f => f.dataUrl);
+
+      if (!hasData) {
+        btnDraw.disabled = true;
+        heroHint.textContent = '⚠️ 此書庫需要重新綁定資料夾才能使用';
+      } else {
+        btnDraw.disabled = false;
+        const remaining = book.files.length - book.drawn.length;
+        heroHint.textContent = `「${name}」共 ${book.files.length} 題，剩餘 ${remaining} 題`;
+      }
+
+      heroArea.style.display = 'flex';
+      questionArea.style.display = 'none';
+      currentQuestion = null;
+
+      updateStats();
+      updateHistory();
+      saveData();
+    }
+
+    async function init() {
+      await loadData();
+      updateBookSelect();
+      updateBookList();
+      updateStats();
+      updateHistory();
+
+      if (currentBook && books[currentBook]) {
+        selBook.value = currentBook;
+        const book = books[currentBook];
+        const hasData = book.files.some(f => f.dataUrl);
+        if (hasData) {
+          btnDraw.disabled = false;
+          const remaining = book.files.length - book.drawn.length;
+          heroHint.textContent = `「${currentBook}」共 ${book.files.length} 題，剩餘 ${remaining} 題`;
+        } else {
+          heroHint.textContent = '⚠️ 此書庫需要重新綁定資料夾才能使用';
+        }
+      }
+
+      // 事件綁定
+      btnDraw.onclick = animateDraw;
+      btnDrawNext.onclick = animateDraw;
+      btnShowAns.onclick = showAnswer;
+      btnCorrect.onclick = () => markAnswer('correct');
+      btnWrong.onclick = () => markAnswer('wrong');
+      btnReset.onclick = resetBook;
+      btnSelectFolder.onclick = selectFolder;
+      btnAddBook.onclick = addBook;
+      btnHelp.onclick = showHelp;
+      selBook.onchange = switchBook;
+      btnResetAllRecords.onclick = resetAllRecords;
+      btnResetAll.onclick = resetAll;
+
+      modalClose.onclick = hideModal;
+      modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) hideModal();
+      };
+
+      btnToggleSidebar.onclick = () => {
+        sidebar.classList.toggle('open');
+        sidebarOverlay.classList.toggle('show');
+      };
+      sidebarOverlay.onclick = () => {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('show');
+      };
+
+      inputBookName.oninput = () => {
+        btnAddBook.disabled = !inputBookName.value.trim() || selectedFiles.length === 0;
+      };
+
+      // 歷史篩選
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.onclick = () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          historyFilter = tab.dataset.filter;
+          updateHistory();
+        };
+      });
+
+      // 快捷鍵
+      window.addEventListener('keydown', (e) => {
+        // 如果正在輸入文字，不觸發快捷鍵
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          if (questionArea.style.display === 'block') {
+            animateDraw();
+          } else if (btnDraw.disabled === false) {
+            animateDraw();
+          }
+        } else if (e.key === '1') {
+          if (questionArea.style.display === 'block' && !btnCorrect.disabled) markAnswer('correct');
+        } else if (e.key === '2') {
+          if (questionArea.style.display === 'block' && !btnWrong.disabled) markAnswer('wrong');
+        } else if (e.key.toLowerCase() === 'a') {
+          if (questionArea.style.display === 'block') showAnswer();
+        } else if (e.key === 'Escape') {
+          hideModal();
+        }
+      });
+    }
+
+
+    // 檢查 File System Access API 支援
+    if (!window.showDirectoryPicker) {
+      document.body.innerHTML = `
+        <div style="padding: 40px; text-align: center;">
+          <h2>⚠️ 瀏覽器不支援</h2>
+          <p>此應用需要 File System Access API，請使用 <b>Chrome</b> 或 <b>Edge</b> 瀏覽器開啟。</p>
+        </div>
+      `;
+    } else {
+      init();
+    }
+  </script>
+  <footer
+    style="text-align: center; padding: 20px; font-size: 13px; color: var(--muted); opacity: 0.8; font-weight: 700;">
+    程式作者：徐承佑
+  </footer>
+</body>
+
+</html>
