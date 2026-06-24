@@ -1157,7 +1157,7 @@
 
       // 嘗試整詞查詢以優化破音字
       try {
-        const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(word)}`);
+        const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(word)}.json`);
         if (res.ok) {
           const data = await res.json();
           if (data.heteronyms && data.heteronyms[0] && data.heteronyms[0].bopomofo) {
@@ -1181,7 +1181,7 @@
           continue;
         }
         try {
-          const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(char)}`);
+          const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(char)}.json`);
           if (res.ok) {
             const data = await res.json();
             if (data.heteronyms && data.heteronyms[0] && data.heteronyms[0].bopomofo) {
