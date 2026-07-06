@@ -1098,6 +1098,11 @@
                   </label>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+                  <button class="btn small" id="btnExportData">💾 匯出備份</button>
+                  <button class="btn small" id="btnImportData">📂 匯入備份</button>
+                  <input type="file" id="importFileInput" accept=".json" style="display:none">
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
                   <button class="btn small warning" id="btnResetAllRecords">🔄 重置所有抽籤紀錄</button>
                   <button class="btn small danger" id="btnResetAll">🗑️ 清空全部資料</button>
                 </div>
@@ -2012,6 +2017,61 @@
       );
     }
 
+    // ========== 匯出備份 ==========
+    function exportData() {
+      const data = {
+        books,
+        zhuyinCache,
+        zhuyinOverrides,
+        showZhuyin: toggleZhuyin.checked
+      };
+      const json = JSON.stringify(data);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vocab-lots-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('✅ 備份已匯出');
+    }
+
+    // ========== 匯入備份 ==========
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.books) books = data.books;
+          if (data.zhuyinCache) zhuyinCache = data.zhuyinCache;
+          if (data.zhuyinOverrides) zhuyinOverrides = data.zhuyinOverrides;
+          if (data.showZhuyin !== undefined) {
+             toggleZhuyin.checked = data.showZhuyin;
+             const isHidden = !toggleZhuyin.checked;
+             document.documentElement.style.setProperty('--ruby-display', isHidden ? 'none' : 'block');
+          }
+          
+          await saveData(); // Save imported data to IndexedDB
+          updateBookSelect();
+          updateBookList();
+          updateStats();
+          updateHistory();
+          if (typeof updateCalibrationList === 'function') updateCalibrationList();
+          showToast('✅ 備份已成功匯入');
+        } catch (err) {
+          console.error(err);
+          showToast('❌ 匯入失敗，請確認檔案格式是否正確');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
     // ========== 更新書庫選單 ==========
     function updateBookSelect() {
       selBook.innerHTML = '<option value="">-- 請選擇書庫 --</option>';
@@ -2481,6 +2541,9 @@
       selBook.onchange = switchBook;
       btnResetAllRecords.onclick = resetAllRecords;
       btnResetAll.onclick = resetAll;
+      btnExportData.onclick = exportData;
+      btnImportData.onclick = () => importFileInput.click();
+      importFileInput.onchange = importData;
 
       modalClose.onclick = hideModal;
       modalOverlay.onclick = (e) => {
