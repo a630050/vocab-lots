@@ -81,8 +81,8 @@
     .sidebar {
       position: fixed;
       top: 0;
-      right: -400px;
-      width: 400px;
+      right: -500px;
+      width: 500px;
 
       height: 100vh;
       background: var(--card);
@@ -783,6 +783,113 @@
       gap: 10px;
       justify-content: flex-end;
     }
+
+    /* Toggle 開關樣式 */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--pri2);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      color: #3b2b6a;
+      font-size: 14px;
+    }
+
+    /* 注音總覽表格與校準樣式 */
+    .overview-modal {
+      max-width: 90% !important;
+      width: 800px !important;
+    }
+    .overview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .overview-table th, .overview-table td {
+      border: 1px solid rgba(59, 43, 106, .1);
+      padding: 10px;
+      text-align: left;
+    }
+    .overview-table th {
+      background: #f3efff;
+      font-weight: 900;
+      color: #3b2b6a;
+    }
+    .overview-table tr {
+      transition: background 0.2s;
+    }
+    .overview-table tr:hover {
+      background: #faf8ff;
+    }
+    .calibrated-row {
+      background-color: #fff3e0 !important;
+    }
+    
+    .calibration-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      align-items: center;
+      background: #f9f7ff;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px dashed rgba(109, 60, 255, .3);
+    }
+    
+    .manual-input {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .no-image-placeholder {
+      padding: 40px;
+      text-align: center;
+      background: #f7f6ff;
+      border-radius: 12px;
+      border: 1px dashed rgba(59, 43, 106, .2);
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
   </style>
 </head>
 
@@ -857,7 +964,7 @@
             <div class="titleRow">
               <div class="secTitle">📊 統計</div>
               <div class="resetBtnGroup">
-                <button class="btn small secondary" id="btnReset">🔄 重置本書庫</button>
+                <button class="btn small secondary" id="btnReset">🔄 清空抽籤紀錄</button>
               </div>
             </div>
             <div class="stats">
@@ -910,49 +1017,104 @@
               <div class="secTitle">⚙️ 後台管理</div>
             </div>
 
-            <div class="field">
-              <label>📖 新增書庫名稱</label>
-              <input type="text" id="inputBookName" placeholder="例如：第一冊、動物篇..." />
-            </div>
-            <div class="field">
-              <label>📁 綁定資料夾（選擇後自動掃描圖片）</label>
-              <button class="btn secondary" id="btnSelectFolder">📂 選擇資料夾</button>
-              <div class="hint" id="folderHint">尚未選擇資料夾</div>
-            </div>
-            <button class="btn" id="btnAddBook" disabled>➕ 新增書庫</button>
-
-            <div class="hr"></div>
-
-            <div class="titleRow">
-              <div class="secTitle">📚 已建立的書庫</div>
-            </div>
-            <div id="bookList">
-              <div class="empty">尚未建立任何書庫</div>
+            <!-- 4 Main Tabs -->
+            <div class="tabRow" style="margin-bottom: 14px; display: flex; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px;">
+              <span class="tab active" id="mainTabAddBook" style="flex:0 0 auto;">新增書庫</span>
+              <span class="tab" id="mainTabBooks" style="flex:0 0 auto;">書庫管理</span>
+              <span class="tab" id="mainTabCalib" style="flex:0 0 auto;">注音校準</span>
+              <span class="tab" id="mainTabSettings" style="flex:0 0 auto;">其它設定</span>
             </div>
 
-            <div class="hr"></div>
+            <div style="flex: 1; overflow-y: auto;">
+              <!-- 區塊 1：新增書庫 -->
+              <div id="sectionAddBook">
+                <div class="tabRow" style="margin-bottom: 14px;">
+                  <span class="tab active" id="tabImageBook" style="padding: 6px 12px; font-size: 13px;">🖼️ 圖片書庫</span>
+                  <span class="tab" id="tabManualBook" style="padding: 6px 12px; font-size: 13px;">✏️ 手動書庫</span>
+                </div>
 
-            <!-- 全域重置區塊 -->
-            <div class="titleRow">
-              <div class="secTitle">🔧 系統管理</div>
-            </div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
-              <button class="btn small warning" id="btnResetAllRecords">🔄 重置所有抽籤紀錄</button>
-              <button class="btn small danger" id="btnResetAll">🗑️ 清空全部資料</button>
-            </div>
+                <div id="imageBookSection">
+                  <div class="field">
+                    <label>📖 新增圖片書庫名稱</label>
+                    <input type="text" id="inputBookName" placeholder="例如：第一冊、動物篇..." />
+                  </div>
+                  <div class="field">
+                    <label>📁 綁定資料夾（自動掃描圖片）</label>
+                    <button class="btn secondary" id="btnSelectFolder">📂 選擇資料夾</button>
+                    <div class="hint" id="folderHint">尚未選擇資料夾</div>
+                  </div>
+                  <button class="btn" id="btnAddBook" disabled>➕ 新增圖片書庫</button>
+                </div>
 
-            <div class="hr"></div>
-            <div class="hint">
-              💡 <b>使用說明：</b><br>
-              1. 輸入書庫名稱<br>
-              2. 點「選擇資料夾」綁定圖片資料夾<br>
-              3. 系統自動掃描圖片，檔名即為題目<br>
-              4. 切換書庫後即可開始抽籤<br>
-              5. 注音會自動從萌典 API 查詢<br><br>
-              🔄 <b>重置功能：</b><br>
-              • 重置本書庫：清空當前書庫的抽籤紀錄<br>
-              • 重置所有抽籤紀錄：保留書庫，清空所有紀錄<br>
-              • 清空全部資料：刪除所有書庫和紀錄
+                <div id="manualBookSection" style="display:none;">
+                  <div class="field">
+                    <label>📖 新增手動書庫名稱</label>
+                    <input type="text" id="inputManualBookName" placeholder="例如：單字小考..." />
+                  </div>
+                  <div class="field">
+                    <label>✏️ 新增單個詞彙</label>
+                    <div style="display:flex; gap:8px;">
+                      <input type="text" id="inputManualWord" placeholder="輸入一個詞彙..." />
+                      <button class="btn" id="btnAddManualWord" style="white-space:nowrap;">加入</button>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label>📝 已加入的詞彙 (<span id="manualWordCount">0</span>)</label>
+                    <div class="scrollBox" style="max-height: 150px; background:#f9f7ff; border:1px solid rgba(59,43,106,.1); border-radius:12px; padding:10px;" id="manualWordList">
+                      <div class="empty">尚未加入任何詞彙</div>
+                    </div>
+                  </div>
+                  <button class="btn" id="btnAddManualBook" disabled>➕ 建立手動書庫</button>
+                </div>
+              </div>
+
+              <!-- 區塊 2：已建立的書庫 -->
+              <div id="sectionBooks" style="display:none;">
+                <div id="bookList">
+                  <div class="empty">尚未建立任何書庫</div>
+                </div>
+                <button class="btn secondary" id="btnShowOverview" style="width:100%; margin-top:10px;">📋 詞彙注音總覽與校準</button>
+              </div>
+
+              <!-- 區塊 3：注音校準管理 -->
+              <div id="sectionCalib" style="display:none;">
+                <div class="scrollBox" style="max-height: 400px; background:#fff3e0; border:1px solid rgba(255, 152, 0, .3); border-radius:12px; padding:10px; margin-bottom:14px;" id="calibrationList">
+                  <div class="empty">尚未設定任何注音校準</div>
+                </div>
+                <div class="hint">
+                  💡 可在「書庫管理」點擊「詞彙注音總覽與校準」來進行編輯。
+                </div>
+              </div>
+
+              <!-- 區塊 4：其它設定 -->
+              <div id="sectionSettings" style="display:none;">
+                <div class="field" style="margin-bottom: 14px;">
+                  <label class="toggle-label">
+                    <div class="toggle-switch">
+                      <input type="checkbox" id="toggleZhuyin" checked>
+                      <span class="slider"></span>
+                    </div>
+                    顯示注音 (前台抽籤時)
+                  </label>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+                  <button class="btn small warning" id="btnResetAllRecords">🔄 重置所有抽籤紀錄</button>
+                  <button class="btn small danger" id="btnResetAll">🗑️ 清空全部資料</button>
+                </div>
+                
+                <div class="hint">
+                  💡 <b>使用說明：</b><br>
+                  1. 輸入書庫名稱<br>
+                  2. 點「選擇資料夾」綁定圖片資料夾<br>
+                  3. 系統自動掃描圖片，檔名即為題目<br>
+                  4. 切換書庫後即可開始抽籤<br>
+                  5. 注音會自動從萌典 API 查詢<br><br>
+                  🔄 <b>重置功能：</b><br>
+                  • 清空抽籤紀錄：清空當前書庫的抽籤紀錄<br>
+                  • 重置所有抽籤紀錄：保留書庫，清空所有紀錄<br>
+                  • 清空全部資料：刪除所有書庫和紀錄
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -976,16 +1138,80 @@
     </div>
   </div>
 
+  <!-- 詞彙總覽與校準 Modal -->
+  <div class="modal-overlay" id="overviewModalOverlay">
+    <div class="modal overview-modal">
+      <span class="modal-close" id="overviewModalClose">&times;</span>
+      <div class="modal-title">📋 詞彙注音總覽與編修 (<span id="overviewBookName"></span>)</div>
+      <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+        <div class="hint" style="margin-bottom:10px;">
+          💡 點擊下方列表的「校準」按鈕，可以直接修改各個字的注音。點擊「刪除詞彙」可刪除該詞彙。
+        </div>
+
+        <table class="overview-table">
+          <thead>
+            <tr>
+              <th width="20%">詞彙</th>
+              <th width="50%">目前注音</th>
+              <th width="30%">操作</th>
+            </tr>
+          </thead>
+          <tbody id="overviewTableBody">
+          </tbody>
+        </table>
+        
+        <div id="overviewAddWordSection" style="margin-top:20px; padding-top:15px; border-top:1px solid rgba(59,43,106,.1); display:none;">
+          <div style="font-weight:900; color:#3b2b6a; margin-bottom:10px;">✏️ 新增詞彙</div>
+          <div style="display:flex; gap:10px;">
+            <input type="text" id="overviewInputNewWord" placeholder="輸入一個新詞彙..." style="flex:1; max-width:250px;" />
+            <button class="btn" id="btnOverviewAddWord">加入</button>
+          </div>
+        </div>
+
+        <div id="overviewAddImageSection" style="margin-top:20px; padding-top:15px; border-top:1px solid rgba(59,43,106,.1); display:none;">
+          <div style="font-weight:900; color:#3b2b6a; margin-bottom:10px;">🖼️ 新增圖片詞彙</div>
+          <button class="btn secondary" id="btnOverviewAddImages">選擇多張圖片加入...</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 獨立校準視窗 Modal -->
+  <div class="modal-overlay" id="calibrationModalOverlay" style="z-index:2000;">
+    <div class="modal" style="max-width: 500px;">
+      <span class="modal-close" id="calibrationModalClose">&times;</span>
+      <div class="modal-title">🎯 設定注音校準</div>
+      <div class="modal-body">
+        <div id="overviewCalibrationForm" class="calibration-form" style="display:flex; flex-direction:column; gap:15px; margin-top:10px; padding:15px; background:var(--bg); border-radius:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font-size:12px; font-weight:bold; color:var(--muted);">目標詞彙</div>
+            <div id="calibTargetWord" style="font-weight:900; font-size:20px; color:#3b2b6a;"></div>
+          </div>
+          <div>
+            <div style="font-size:12px; font-weight:bold; color:var(--muted); margin-bottom:10px;">請修改正確的注音符號：</div>
+            <div id="calibInputsContainer" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+            <button class="btn secondary" id="btnCancelCalibration">取消</button>
+            <button class="btn" id="btnSaveCalibration">儲存校準</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ========== 資料結構 ==========
-    let books = {}; // { bookName: { files: [{name, dataUrl}], drawn: [], history: [] } }
+    let books = {}; // { bookName: { files: [{name, dataUrl}], drawn: [], history: [], isManual: false } }
     let currentBook = '';
     let currentQuestion = null;
     let selectedFiles = [];
+    let manualWords = []; // 用於暫存手動輸入的詞彙
     let zhuyinCache = {};
     let historyFilter = 'all';
     let modalCallback = null;
+    let showZhuyin = true;
+    let zhuyinOverrides = {};
 
     // ========== DOM ==========
     const $ = id => document.getElementById(id);
@@ -1032,6 +1258,38 @@
     const modalBody = $('modalBody');
     const modalCancel = $('modalCancel');
     const modalConfirm = $('modalConfirm');
+
+    const tabImageBook = $('tabImageBook');
+    const tabManualBook = $('tabManualBook');
+    const imageBookSection = $('imageBookSection');
+    const manualBookSection = $('manualBookSection');
+    const inputManualBookName = $('inputManualBookName');
+    const inputManualWord = $('inputManualWord');
+    const btnAddManualWord = $('btnAddManualWord');
+    const manualWordList = $('manualWordList');
+    const manualWordCount = $('manualWordCount');
+    const btnAddManualBook = $('btnAddManualBook');
+    const btnShowOverview = $('btnShowOverview');
+    const calibrationList = $('calibrationList');
+    const toggleZhuyin = $('toggleZhuyin');
+
+    const overviewModalOverlay = $('overviewModalOverlay');
+    const overviewModalClose = $('overviewModalClose');
+    const calibrationModalOverlay = $('calibrationModalOverlay');
+    const calibrationModalClose = $('calibrationModalClose');
+    const overviewBookName = $('overviewBookName');
+    const overviewTableBody = $('overviewTableBody');
+    const overviewCalibrationForm = $('overviewCalibrationForm');
+    const calibTargetWord = $('calibTargetWord');
+    const calibInputsContainer = $('calibInputsContainer');
+    const btnSaveCalibration = $('btnSaveCalibration');
+    const btnCancelCalibration = $('btnCancelCalibration');
+    
+    const overviewAddWordSection = $('overviewAddWordSection');
+    const overviewInputNewWord = $('overviewInputNewWord');
+    const btnOverviewAddWord = $('btnOverviewAddWord');
+    const overviewAddImageSection = $('overviewAddImageSection');
+    const btnOverviewAddImages = $('btnOverviewAddImages');
 
 
     // ========== Modal 確認對話框 ==========
@@ -1122,13 +1380,16 @@
         saveBooks[name] = {
           files: book.files, // 儲存完整物件（含 dataUrl）
           drawn: book.drawn,
-          history: book.history
+          history: book.history,
+          isManual: book.isManual || false
         };
       }
       try {
         await dbPut('books', saveBooks);
+        await dbPut('zhuyinOverrides', zhuyinOverrides);
         localStorage.setItem('drawLots_currentBook', currentBook);
         localStorage.setItem('drawLots_zhuyinCache', JSON.stringify(zhuyinCache));
+        localStorage.setItem('drawLots_showZhuyin', showZhuyin ? '1' : '0');
       } catch (e) {
         console.error('儲存失敗', e);
       }
@@ -1138,14 +1399,19 @@
       try {
         await initDB();
         const savedBooks = await dbGet('books') || {};
+        const savedOverrides = await dbGet('zhuyinOverrides') || {};
         const savedCurrent = localStorage.getItem('drawLots_currentBook') || '';
         const savedCache = JSON.parse(localStorage.getItem('drawLots_zhuyinCache') || '{}');
+        const savedShowZhuyin = localStorage.getItem('drawLots_showZhuyin');
 
         zhuyinCache = savedCache;
         books = savedBooks;
         currentBook = savedCurrent;
-
-        // 如果 localStorage 還有舊格式的資料，可以考慮遷移，但這裡我們先以新格式為主
+        zhuyinOverrides = savedOverrides;
+        if (savedShowZhuyin !== null) {
+          showZhuyin = savedShowZhuyin === '1';
+        }
+        toggleZhuyin.checked = showZhuyin;
       } catch (e) {
         console.error('載入資料失敗', e);
       }
@@ -1154,6 +1420,10 @@
     // ========== 萌典 API ==========
     async function getZhuyin(word) {
       if (!word) return [];
+
+      if (zhuyinOverrides[word] && Array.isArray(zhuyinOverrides[word])) {
+        return zhuyinOverrides[word];
+      }
 
       // 嘗試整詞查詢以優化破音字
       try {
@@ -1250,6 +1520,10 @@
         const zyEl = document.createElement('div');
         zyEl.className = 'zy';
         zyEl.id = `zy-char-${i}`;
+        
+        if (!showZhuyin) {
+          zyEl.style.display = 'none';
+        }
 
         if (zhuyinCache[char]) {
           const { main, tone } = splitZhuyin(zhuyinCache[char]);
@@ -1279,7 +1553,14 @@
         chars.forEach((char, i) => {
           const zy = list[i];
           const zyEl = document.getElementById(`zy-char-${i}`);
-          if (zy && zyEl && (zyEl.textContent === '...' || zyEl.innerHTML === '')) {
+          
+          if (!showZhuyin) {
+            if (zyEl) zyEl.style.display = 'none';
+          } else {
+            if (zyEl) zyEl.style.display = 'flex';
+          }
+
+          if (zy && zyEl) {
             zyEl.innerHTML = '';
             const { main, tone } = splitZhuyin(zy);
             main.forEach(c => {
@@ -1293,7 +1574,7 @@
               ts.textContent = tone;
               zyEl.appendChild(ts);
             }
-          } else if (!zy && zyEl && zyEl.textContent === '...') {
+          } else if (!zy && zyEl) {
             zyEl.textContent = '?';
           }
         });
@@ -1411,9 +1692,9 @@
 
       const book = books[currentBook];
 
-      const hasData = book.files.some(f => f.dataUrl);
+      const hasData = book.isManual ? book.files.length > 0 : book.files.some(f => f.dataUrl);
       if (!hasData) {
-        showToast('請重新綁定資料夾以載入圖片');
+        showToast(book.isManual ? '書庫中沒有詞彙' : '請重新綁定資料夾以載入圖片');
         return;
       }
 
@@ -1514,16 +1795,17 @@
           <section style="margin-bottom: 20px;">
             <h3 style="color: var(--pri2); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">📁 準備與新增書庫</h3>
             <ol style="padding-left: 20px;">
-              <li><b>準備圖片</b>：請將您的詞彙圖片放入資料夾中，<b>檔案名稱即為題目</b>（例如：<code>蘋果.jpg</code>, <code>香蕉.png</code>）。</li>
-              <li><b>建立書庫</b>：
-                <ul style="padding-left: 20px; margin-top: 5px;">
-                  <li>點擊右側 <code>⚙️</code> 按鈕開啟管理面板。</li>
-                  <li>輸入「書庫名稱」。</li>
-                  <li>點擊「選擇資料夾」並授權瀏覽器存取。</li>
-                  <li>點擊「新增書庫」完成設定。</li>
-                </ul>
-              </li>
+              <li><b>新增圖片書庫</b>：將詞彙圖片放入資料夾中（<b>檔案名稱即為題目</b>）。於管理面板輸入名稱並點選「選擇資料夾」進行綁定。</li>
+              <li><b>新增手動書庫</b>：適合不需要圖片，純文字題目的情境。於面板輸入書庫名稱後，可逐筆加入詞彙。</li>
             </ol>
+          </section>
+
+          <section style="margin-bottom: 20px;">
+            <h3 style="color: var(--pri2); border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px;">📋 書庫管理與注音校準</h3>
+            <ul style="padding-left: 20px;">
+              <li><b>管理詞彙</b>：在「書庫管理」分頁，點擊「詞彙注音總覽與校準」，可快速瀏覽所有詞彙。您可以在這裡刪除詞彙，或批次/單筆新增詞彙。</li>
+              <li><b>校準注音</b>：若萌典 API 回傳的注音（如破音字）不符合預期，您可在總覽列表中點擊「設定校準」，直接為每個字設定正確的注音，系統會全域記憶您的修正。</li>
+            </ul>
           </section>
 
           <section style="margin-bottom: 20px;">
@@ -1575,10 +1857,20 @@
       const book = books[currentBook];
       const file = book.files.find(f => f.name === currentQuestion.name);
 
+      let content = '';
+      if (file.dataUrl) {
+        content = `<img src="${file.dataUrl}" class="modal-img">`;
+      } else {
+        content = `<div class="no-image-placeholder">
+                     <div style="font-size:40px;">📷</div>
+                     <div>此詞彙沒有答案圖片</div>
+                   </div>`;
+      }
+
       showModal(
         '👀 答案視窗',
         `<div class="modal-img-container">
-          <img src="${file.dataUrl}" class="modal-img">
+          ${content}
           <div style="margin-top:15px; font-size: 2rem; font-weight: 1000; color: #3b2b6a;">${currentQuestion.name}</div>
         </div>`,
         null,
@@ -1743,18 +2035,18 @@
 
       bookList.innerHTML = '';
       for (const [name, book] of Object.entries(books)) {
-        const hasData = book.files.some(f => f.dataUrl);
+        const hasData = book.isManual ? book.files.length > 0 : book.files.some(f => f.dataUrl);
         const drawnCount = book.drawn.length;
         const totalCount = book.files.length;
         const div = document.createElement('div');
         div.className = 'bookItem';
         div.innerHTML = `
           <div>
-            <div class="name">${name}</div>
+            <div class="name">${name} ${book.isManual ? '<span style="font-size:11px; color:#ff9800;">✏️ 手動</span>' : ''}</div>
             <div class="info">${totalCount} 題 | 已抽 ${drawnCount} 題 | ${hasData ? '✅ 已載入' : '⚠️ 需重新綁定'}</div>
           </div>
           <div class="actions">
-            <button class="btn small secondary rebind-btn" data-book="${name}">📂 重新綁定</button>
+            <button class="btn small ghost" onclick="openOverviewModal('${name}')">📋 注音</button>
             <button class="btn small danger delete-btn" data-book="${name}">🗑️</button>
           </div>
         `;
@@ -1763,9 +2055,6 @@
 
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = () => deleteBook(btn.dataset.book);
-      });
-      document.querySelectorAll('.rebind-btn').forEach(btn => {
-        btn.onclick = () => rebindBook(btn.dataset.book);
       });
     }
 
@@ -1794,53 +2083,6 @@
           showToast('✅ 已刪除書庫「' + name + '」');
         }
       );
-    }
-
-    // ========== 重新綁定書庫 ==========
-    async function rebindBook(name) {
-      try {
-        const dirHandle = await window.showDirectoryPicker();
-        const files = [];
-        const imageExts = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
-
-        for await (const entry of dirHandle.values()) {
-          if (entry.kind === 'file') {
-            const lowerName = entry.name.toLowerCase();
-            if (imageExts.some(ext => lowerName.endsWith(ext))) {
-              const file = await entry.getFile();
-              const dataUrl = await fileToDataUrl(file);
-              const baseName = entry.name.replace(/\.[^.]+$/, '');
-              files.push({ name: baseName, dataUrl });
-            }
-          }
-        }
-
-        if (files.length === 0) {
-          showToast('資料夾內沒有圖片檔案');
-          return;
-        }
-
-        const oldHistory = books[name].history;
-        const oldDrawn = books[name].drawn;
-
-        books[name].files = files;
-        const newNames = files.map(f => f.name);
-        books[name].drawn = oldDrawn.filter(n => newNames.includes(n));
-        books[name].history = oldHistory.filter(h => newNames.includes(h.name));
-
-        updateBookList();
-        updateBookSelect();
-        updateStats();
-        updateHistory();
-        saveData();
-        showToast(`✅ 已重新綁定「${name}」，共 ${files.length} 題`);
-
-      } catch (e) {
-        if (e.name !== 'AbortError') {
-          console.error('重新綁定失敗', e);
-          showToast('❌ 重新綁定失敗');
-        }
-      }
     }
 
     // ========== 選擇資料夾 ==========
@@ -1953,11 +2195,11 @@
 
       currentBook = name;
       const book = books[name];
-      const hasData = book.files.some(f => f.dataUrl);
+      const hasData = book.isManual ? book.files.length > 0 : book.files.some(f => f.dataUrl);
 
       if (!hasData) {
         btnDraw.disabled = true;
-        heroHint.textContent = '⚠️ 此書庫需要重新綁定資料夾才能使用';
+        heroHint.textContent = book.isManual ? '⚠️ 此書庫沒有任何詞彙' : '⚠️ 此書庫需要重新綁定資料夾才能使用';
       } else {
         btnDraw.disabled = false;
         const remaining = book.files.length - book.drawn.length;
@@ -1973,23 +2215,256 @@
       saveData();
     }
 
+    // ========== 手動書庫邏輯 ==========
+    function addManualWord() {
+      const w = inputManualWord.value.trim();
+      if (!w) return;
+      if (manualWords.includes(w)) {
+        showToast('詞彙已存在');
+        return;
+      }
+      manualWords.push(w);
+      inputManualWord.value = '';
+      inputManualWord.focus();
+      updateManualWordList();
+      btnAddManualBook.disabled = manualWords.length === 0 || !inputManualBookName.value.trim();
+    }
+
+    function removeManualWord(idx) {
+      manualWords.splice(idx, 1);
+      updateManualWordList();
+      btnAddManualBook.disabled = manualWords.length === 0 || !inputManualBookName.value.trim();
+    }
+
+    function updateManualWordList() {
+      manualWordCount.textContent = manualWords.length;
+      if (manualWords.length === 0) {
+        manualWordList.innerHTML = '<div class="empty">尚未加入任何詞彙</div>';
+        return;
+      }
+      manualWordList.innerHTML = '';
+      manualWords.forEach((w, i) => {
+        const d = document.createElement('div');
+        d.style.display = 'flex';
+        d.style.justifyContent = 'space-between';
+        d.style.padding = '4px 8px';
+        d.style.borderBottom = '1px solid rgba(0,0,0,0.05)';
+        d.innerHTML = `
+          <span style="font-weight:bold; color:#3b2b6a;">${w}</span>
+          <button style="border:none; background:none; cursor:pointer; color:#e24a4a; font-weight:bold;" onclick="removeManualWord(${i})">X</button>
+        `;
+        manualWordList.appendChild(d);
+      });
+    }
+
+    function addManualBook() {
+      const name = inputManualBookName.value.trim();
+      if (!name) return;
+      if (books[name]) {
+        showToast('書庫名稱已存在');
+        return;
+      }
+      if (manualWords.length === 0) {
+        showToast('請先加入詞彙');
+        return;
+      }
+
+      books[name] = {
+        files: manualWords.map(w => ({ name: w, dataUrl: null })),
+        drawn: [],
+        history: [],
+        isManual: true
+      };
+
+      currentBook = name;
+      inputManualBookName.value = '';
+      manualWords = [];
+      updateManualWordList();
+      btnAddManualBook.disabled = true;
+
+      updateBookSelect();
+      updateBookList();
+      updateStats();
+      updateHistory();
+      saveData();
+      switchBook();
+
+      showToast(`✅ 已新增手動書庫「${name}」`);
+      prefetchZhuyin(name);
+      
+      openOverviewModal(name);
+    }
+
+    // ========== 校準管理與總覽 Modal ==========
+    function updateCalibrationList() {
+      if (Object.keys(zhuyinOverrides).length === 0) {
+        calibrationList.innerHTML = '<div class="empty">尚未設定任何注音校準</div>';
+        return;
+      }
+      calibrationList.innerHTML = '';
+      for (const [target, replaceArr] of Object.entries(zhuyinOverrides)) {
+        const d = document.createElement('div');
+        d.style.display = 'flex';
+        d.style.justifyContent = 'space-between';
+        d.style.padding = '4px 8px';
+        d.style.borderBottom = '1px solid rgba(255,152,0,0.2)';
+        d.style.marginBottom = '4px';
+        const replaceStr = Array.isArray(replaceArr) ? replaceArr.join(' ') : replaceArr;
+        d.innerHTML = `
+          <div><span style="font-weight:900;">${target}</span> ➔ <span style="color:var(--muted); font-weight:bold;">${replaceStr}</span></div>
+          <button style="border:none; background:none; cursor:pointer; color:#e24a4a; font-weight:bold;" onclick="removeCalibration('${target}')">刪除</button>
+        `;
+        calibrationList.appendChild(d);
+      }
+    }
+
+    function removeCalibration(target) {
+      delete zhuyinOverrides[target];
+      saveData();
+      updateCalibrationList();
+      showToast('✅ 已刪除校準');
+      if (overviewModalOverlay.classList.contains('show')) {
+        renderOverviewTable();
+      }
+    }
+
+    async function openOverviewModal(bookName = null) {
+      const targetBook = bookName || currentBook;
+      if (!targetBook || !books[targetBook]) {
+        showToast('請先選擇或建立書庫');
+        return;
+      }
+      
+      overviewBookName.textContent = targetBook;
+      
+      const book = books[targetBook];
+      overviewAddWordSection.style.display = book.isManual ? 'block' : 'none';
+      overviewAddImageSection.style.display = book.isManual ? 'none' : 'block';
+      
+      overviewModalOverlay.classList.add('show');
+      
+      overviewTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">載入中...</td></tr>';
+      
+      await prefetchZhuyin(targetBook);
+      
+      overviewTableBody.dataset.book = targetBook;
+      
+      await renderOverviewTable();
+    }
+    
+    async function renderOverviewTable() {
+      const targetBook = overviewTableBody.dataset.book;
+      if (!targetBook || !books[targetBook]) return;
+      
+      const book = books[targetBook];
+      overviewTableBody.innerHTML = '';
+      
+      for (const file of book.files) {
+        const word = file.name;
+        const tr = document.createElement('tr');
+        
+        let zyArr = [];
+        zyArr = await getZhuyin(word);
+        
+        const isCalibrated = !!zhuyinOverrides[word];
+        if (isCalibrated) {
+          tr.className = 'calibrated-row';
+        }
+        
+        const zyHtml = zyArr.map(z => {
+           if (!z) return '<span style="color:#e24a4a;">?</span>';
+           return `<span class="badge" style="background:#fff; margin-right:4px;">${z}</span>`;
+        }).join('');
+        
+        tr.innerHTML = `
+          <td style="font-weight:900; font-size:16px;">${word}</td>
+          <td>${zyHtml} ${isCalibrated ? '<span style="font-size:11px; color:#ff9800; font-weight:bold;">(已校準)</span>' : ''}</td>
+          <td style="display:flex; gap:6px; align-items:center;">
+            <button class="btn small ${isCalibrated ? 'secondary' : 'ghost'}" onclick="startCalibration('${word}')">
+              ${isCalibrated ? '修改校準' : '設定校準'}
+            </button>
+            <button class="btn small danger" onclick="removeOverviewWord('${word}')">刪除詞彙</button>
+          </td>
+        `;
+        overviewTableBody.appendChild(tr);
+      }
+    }
+
+    async function removeOverviewWord(word) {
+      const targetBook = overviewTableBody.dataset.book;
+      if (!targetBook || !books[targetBook]) return;
+      
+      const book = books[targetBook];
+      book.files = book.files.filter(f => f.name !== word);
+      // Remove from history and drawn
+      book.history = book.history.filter(h => h.name !== word);
+      book.drawn = book.drawn.filter(d => d !== word);
+      
+      await saveData();
+      updateBookList();
+      updateStats();
+      if (currentBook === targetBook) {
+        switchBook();
+      }
+      renderOverviewTable();
+      showToast(`已刪除「${word}」`);
+    }
+
+    async function startCalibration(word) {
+      calibTargetWord.textContent = word;
+      calibInputsContainer.innerHTML = '';
+      
+      const currentZy = await getZhuyin(word);
+      
+      for (let i = 0; i < word.length; i++) {
+        const char = word[i];
+        const zy = currentZy[i] || '';
+        
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.style.alignItems = 'center';
+        
+        const lbl = document.createElement('div');
+        lbl.textContent = char;
+        lbl.style.fontWeight = 'bold';
+        lbl.style.fontSize = '14px';
+        lbl.style.marginBottom = '2px';
+        
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = zy;
+        inp.className = 'calib-char-input';
+        inp.style.width = '60px';
+        inp.style.textAlign = 'center';
+        inp.style.padding = '4px';
+        
+        wrapper.appendChild(lbl);
+        wrapper.appendChild(inp);
+        calibInputsContainer.appendChild(wrapper);
+      }
+      
+      calibrationModalOverlay.classList.add('show');
+    }
+
     async function init() {
       await loadData();
       updateBookSelect();
       updateBookList();
       updateStats();
       updateHistory();
+      updateCalibrationList();
 
       if (currentBook && books[currentBook]) {
         selBook.value = currentBook;
         const book = books[currentBook];
-        const hasData = book.files.some(f => f.dataUrl);
+        const hasData = book.isManual ? book.files.length > 0 : book.files.some(f => f.dataUrl);
         if (hasData) {
           btnDraw.disabled = false;
           const remaining = book.files.length - book.drawn.length;
           heroHint.textContent = `「${currentBook}」共 ${book.files.length} 題，剩餘 ${remaining} 題`;
         } else {
-          heroHint.textContent = '⚠️ 此書庫需要重新綁定資料夾才能使用';
+          heroHint.textContent = book.isManual ? '⚠️ 此書庫沒有任何詞彙' : '⚠️ 此書庫需要重新綁定資料夾才能使用';
         }
       }
 
@@ -2026,14 +2501,189 @@
       };
 
       // 歷史篩選
-      document.querySelectorAll('.tab').forEach(tab => {
+      document.querySelectorAll('.tab[data-filter]').forEach(tab => {
         tab.onclick = () => {
-          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab[data-filter]').forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
           historyFilter = tab.dataset.filter;
           updateHistory();
         };
       });
+
+      // Main Tabs Logic
+      const mainTabs = [
+        { tab: $('mainTabAddBook'), section: $('sectionAddBook') },
+        { tab: $('mainTabBooks'), section: $('sectionBooks') },
+        { tab: $('mainTabCalib'), section: $('sectionCalib') },
+        { tab: $('mainTabSettings'), section: $('sectionSettings') }
+      ];
+
+      mainTabs.forEach(item => {
+        if(item.tab) {
+          item.tab.onclick = () => {
+            mainTabs.forEach(t => {
+              if(t.tab) t.tab.classList.remove('active');
+              if(t.section) t.section.style.display = 'none';
+            });
+            if(item.tab) item.tab.classList.add('active');
+            if(item.section) item.section.style.display = 'block';
+          };
+        }
+      });
+
+      // 新增的事件綁定
+      if (tabImageBook) {
+        tabImageBook.onclick = () => {
+          tabImageBook.classList.add('active');
+          tabManualBook.classList.remove('active');
+          imageBookSection.style.display = 'block';
+          manualBookSection.style.display = 'none';
+        };
+      }
+      if (tabManualBook) {
+        tabManualBook.onclick = () => {
+          tabManualBook.classList.add('active');
+          tabImageBook.classList.remove('active');
+          manualBookSection.style.display = 'block';
+          imageBookSection.style.display = 'none';
+        };
+      }
+      
+      btnAddManualWord.onclick = addManualWord;
+      inputManualWord.onkeypress = (e) => {
+        if(e.key === 'Enter') addManualWord();
+      };
+      inputManualBookName.oninput = () => {
+        btnAddManualBook.disabled = manualWords.length === 0 || !inputManualBookName.value.trim();
+      };
+      btnAddManualBook.onclick = addManualBook;
+      
+      btnShowOverview.onclick = () => openOverviewModal();
+      
+      toggleZhuyin.onchange = () => {
+        showZhuyin = toggleZhuyin.checked;
+        saveData();
+        if (currentQuestion) {
+           renderQuestion(currentQuestion);
+        }
+      };
+
+      btnSaveCalibration.onclick = async () => {
+        const target = calibTargetWord.textContent;
+        const inputs = calibInputsContainer.querySelectorAll('input');
+        const zyArr = Array.from(inputs).map(inp => inp.value.trim());
+        
+        zhuyinOverrides[target] = zyArr;
+        await saveData();
+        updateCalibrationList();
+        
+        calibrationModalOverlay.classList.remove('show');
+        showToast(`✅ 已更新「${target}」的注音`);
+        
+        renderOverviewTable();
+      };
+      
+      btnOverviewAddWord.onclick = async () => {
+        const targetBook = overviewTableBody.dataset.book;
+        if (!targetBook || !books[targetBook]) return;
+        const book = books[targetBook];
+        if (!book.isManual) return;
+        
+        const w = overviewInputNewWord.value.trim();
+        if (!w) return;
+        if (book.files.some(f => f.name === w)) {
+          showToast('詞彙已存在於此書庫');
+          return;
+        }
+        
+        book.files.push({ name: w, dataUrl: null });
+        overviewInputNewWord.value = '';
+        await saveData();
+        updateBookList();
+        updateStats();
+        if (currentBook === targetBook) {
+          switchBook();
+        }
+        renderOverviewTable();
+        showToast(`已加入「${w}」`);
+      };
+
+      btnOverviewAddImages.onclick = async () => {
+        const targetBook = overviewTableBody.dataset.book;
+        if (!targetBook || !books[targetBook]) return;
+        const book = books[targetBook];
+        if (book.isManual) return;
+        
+        try {
+          const handles = await window.showOpenFilePicker({
+            multiple: true,
+            types: [{
+              description: 'Images',
+              accept: { 'image/*': ['.png', '.gif', '.jpeg', '.jpg', '.webp'] }
+            }]
+          });
+          
+          let processed = 0;
+          let added = 0;
+          for (const handle of handles) {
+            const file = await handle.getFile();
+            let name = file.name.replace(/\.[^/.]+$/, "");
+            
+            if (!book.files.some(f => f.name === name)) {
+              const reader = new FileReader();
+              reader.onload = async (e) => {
+                book.files.push({ name: name, dataUrl: e.target.result });
+                processed++;
+                added++;
+                if (processed === handles.length) {
+                  await finishAddImages(targetBook, added);
+                }
+              };
+              reader.readAsDataURL(file);
+            } else {
+               processed++;
+               if (processed === handles.length) {
+                 await finishAddImages(targetBook, added);
+               }
+            }
+          }
+        } catch (e) {
+          console.warn('使用者取消選取圖片', e);
+        }
+      };
+
+      async function finishAddImages(targetBook, added) {
+        if (added > 0) {
+          await saveData();
+          updateBookList();
+          updateStats();
+          if (currentBook === targetBook) {
+            switchBook();
+          }
+          renderOverviewTable();
+          showToast(`成功加入 ${added} 張圖片詞彙`);
+        } else {
+          showToast('無新增圖片 (可能名稱重複)');
+        }
+      }
+
+      btnCancelCalibration.onclick = () => {
+        calibrationModalOverlay.classList.remove('show');
+      };
+      
+      calibrationModalClose.onclick = () => {
+        calibrationModalOverlay.classList.remove('show');
+      };
+      
+      calibrationModalOverlay.onclick = (e) => {
+        if (e.target === calibrationModalOverlay) {
+          calibrationModalOverlay.classList.remove('show');
+        }
+      };
+
+      overviewModalClose.onclick = () => {
+        overviewModalOverlay.classList.remove('show');
+      };
 
       // 快捷鍵
       window.addEventListener('keydown', (e) => {
