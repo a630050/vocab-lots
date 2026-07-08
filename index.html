@@ -1440,6 +1440,24 @@
         }
       }
 
+      // 嘗試子字串查詢 (例如從長句中提取局部詞彙的注音)
+      if (offlineDict && word.length > 1) {
+        for (const key of Object.keys(offlineDict)) {
+          if (key.includes(word)) {
+            const fullZy = offlineDict[key];
+            const parts = fullZy.trim().split(/\s+/);
+            // 只有當字典長度與注音數量完全一致時，才能準確切分
+            if (parts.length === key.length) {
+              const index = key.indexOf(word);
+              const extracted = parts.slice(index, index + word.length);
+              // 快取起來，下次就變成整詞查詢了
+              zhuyinOverrides[word] = extracted;
+              return extracted;
+            }
+          }
+        }
+      }
+
       // 如果整詞查詢失敗或長度不符，則回退至逐字查詢
       const results = [];
       for (const char of word) {
