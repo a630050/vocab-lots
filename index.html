@@ -1423,6 +1423,36 @@
       }
     }
 
+    // ========== 取得單字最高頻率注音 ==========
+    function getMostFrequentZhuyinForChar(char) {
+      if (!offlineDict) return '';
+      
+      let counts = {};
+      for (const key of Object.keys(offlineDict)) {
+        if (key.includes(char)) {
+          const parts = offlineDict[key].trim().split(/\s+/);
+          if (parts.length === key.length) {
+            const idx = key.indexOf(char);
+            const zy = parts[idx];
+            if (zy) {
+              counts[zy] = (counts[zy] || 0) + 1;
+            }
+          }
+        }
+      }
+      
+      // 預設為字典內的單字條目 (若存在)
+      let bestZy = offlineDict[char] ? offlineDict[char].trim() : '';
+      let maxCount = 0;
+      for (const zy in counts) {
+        if (counts[zy] > maxCount) {
+          maxCount = counts[zy];
+          bestZy = zy;
+        }
+      }
+      return bestZy;
+    }
+
     // ========== 萌典離線字典查詢 ==========
     async function getZhuyin(word) {
       if (!word) return [];
@@ -1466,8 +1496,8 @@
           continue;
         }
         
-        if (offlineDict && offlineDict[char]) {
-          const zy = offlineDict[char].trim();
+        const zy = getMostFrequentZhuyinForChar(char);
+        if (zy) {
           zhuyinCache[char] = zy;
           results.push(zy);
         } else {
