@@ -1217,6 +1217,7 @@
     let modalCallback = null;
     let showZhuyin = true;
     let zhuyinOverrides = {};
+    let offlineDict = null;
 
     // ========== DOM ==========
     const $ = id => document.getElementById(id);
@@ -1422,7 +1423,7 @@
       }
     }
 
-    // ========== 萌典 API ==========
+    // ========== 萌典離線字典查詢 ==========
     async function getZhuyin(word) {
       if (!word) return [];
 
@@ -1431,21 +1432,12 @@
       }
 
       // 嘗試整詞查詢以優化破音字
-      try {
-        const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(word)}.json`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.heteronyms && data.heteronyms[0] && data.heteronyms[0].bopomofo) {
-            const fullZy = data.heteronyms[0].bopomofo;
-            // 萌典詞彙注音通常以空格分隔，例如 "ㄒㄧㄠˇ ㄒㄩㄝˊ"
-            const parts = fullZy.trim().split(/\s+/);
-            if (parts.length === word.length) {
-              return parts;
-            }
-          }
+      if (offlineDict && offlineDict[word]) {
+        const fullZy = offlineDict[word];
+        const parts = fullZy.trim().split(/\s+/);
+        if (parts.length === word.length) {
+          return parts;
         }
-      } catch (e) {
-        console.warn('整詞查詢失敗，切換至單字查詢', e);
       }
 
       // 如果整詞查詢失敗或長度不符，則回退至逐字查詢
@@ -1455,22 +1447,12 @@
           results.push(zhuyinCache[char]);
           continue;
         }
-        try {
-          const res = await fetch(`https://www.moedict.tw/uni/${encodeURIComponent(char)}.json`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.heteronyms && data.heteronyms[0] && data.heteronyms[0].bopomofo) {
-              const zy = data.heteronyms[0].bopomofo.replace(/[˙ˊˇˋ\s]/g, m => m);
-              zhuyinCache[char] = zy;
-              results.push(zy);
-            } else {
-              results.push('');
-            }
-          } else {
-            results.push('');
-          }
-        } catch (e) {
-          console.error('查詢注音失敗', char, e);
+        
+        if (offlineDict && offlineDict[char]) {
+          const zy = offlineDict[char].trim();
+          zhuyinCache[char] = zy;
+          results.push(zy);
+        } else {
           results.push('');
         }
       }
@@ -2508,6 +2490,15 @@
     }
 
     async function init() {
+      try {
+        const res = await fetch('dict-zhuyin.json');
+        offlineDict = await res.json();
+        console.log('載入離線字典成功，共載入 ' + Object.keys(offlineDict).length + ' 筆');
+      } catch(e) {
+        console.warn('載入離線字典失敗', e);
+        offlineDict = {};
+      }
+
       await loadData();
       updateBookSelect();
       updateBookList();
